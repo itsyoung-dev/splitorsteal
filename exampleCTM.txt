@@ -1,0 +1,44 @@
+const { ContextMenuCommandBuilder, ApplicationCommandType, EmbedBuilder } = require("discord.js");
+const ButtonPagination = require('../utils/buttonPagination');
+const footerData = require('../messageConfig.json');
+const Setup = require('../../schemas/setup');
+
+
+module.exports = {
+  data: new ContextMenuCommandBuilder()
+    .setName("howtoplay")
+    .setType(ApplicationCommandType.User),
+    run: async (client, interaction) => {
+    const targetUser = interaction.options.getUser('user') || interaction.user;
+
+    try {
+      const avatarUrl = targetUser.displayAvatarURL();
+
+      const setup = await Setup.findOne({ guildId: interaction.guild.id });
+      if (!setup) {
+          return interaction.reply({ content: 'You need to set up Split or Steal first. Use /setup to configure.', ephemeral: true });
+      }
+
+      if (setup) {
+        const portfolioEmbed = new EmbedBuilder()
+          .setTitle('How to Play Split or Steal')
+          .setThumbnail(avatarUrl)
+          .setFooter({
+            text: `${footerData.footerText}`,
+          })
+          .setTimestamp();
+          
+        if (artEmbeds.length > 0) {
+          ButtonPagination(interaction, [portfolioEmbed, ...artEmbeds]);
+        } else {
+          interaction.reply({ content: 'This user doesn\'t have any art to show on their portfolio.', ephemeral: true });
+        }
+      } else {
+        interaction.reply({ content: 'No portfolio found for the specified user.', ephemeral: true });
+      }
+    } catch (error) {
+      console.error(error);
+      interaction.reply({ content: 'An error occurred while fetching the portfolio.', ephemeral: true });
+    }
+  },
+};
